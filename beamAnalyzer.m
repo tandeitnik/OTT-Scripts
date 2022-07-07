@@ -1,3 +1,6 @@
+%this scripts evaluates the optical forces along the x,y, and z direction of a trapped spherical particle on an optical tweezers. It also calculates
+%the potential well along the x direction. All the forces and the potential well are plotted at the end of the script.
+
 % Add the toolbox to the path (assuming we are in ott/examples)
 addpath('../');
 
