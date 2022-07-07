@@ -82,53 +82,45 @@ end
 close(wb)
 
 %determining x_max and x_min of all traces
-x_max = max(simulationPositions{1});
-x_min = min(simulationPositions{1});
+x_max = max(simulatedSignal{1});
+x_min = min(simulatedSignal{1});
 
 for i = 2:trials
 
-    x_max = max(x_max,max(simulationPositions{i}));
-    x_min = min(x_min,min(simulationPositions{i}));
+    x_max = max(x_max,max(simulatedSignal{i}));
+    x_min = min(x_min,min(simulatedSignal{i}));
 
 end
 
 %building the edges
-nbins = 50;
+nbins = size(simulatedSignal{1},2);
 edges = linspace(x_min,x_max,nbins);
 edgesStamps = edges(1:end-1);
 
-meanU = -kbT.*log(histcounts(simulationPositions{1},edges, 'Normalization', 'probability'));
+meanRho = histcounts(simulatedSignal{1},edges, 'Normalization', 'probability');
 
 for i = 2:trials
 
-    meanU = meanU + -kbT.*log(histcounts(simulationPositions{i},edges, 'Normalization', 'probability'));
+    meanRho = meanRho + histcounts(simulatedSignal{i},edges, 'Normalization', 'probability');
 
 end
 
-meanU = meanU/trials;
+meanRho = meanRho/trials;
 
-varU = (-kbT.*log(histcounts(simulationPositions{1},edges, 'Normalization', 'probability')) - meanU).^2;
-
-for i = 2:trials
-
-    varU = varU + (-kbT.*log(histcounts(simulationPositions{i},edges, 'Normalization', 'probability')) - meanU).^2;
-
-end
-
-varU = varU/(trials-1);
-
-%fitting meanU to a second degree polynomial
-%% Fit: 'untitled fit 1'.
-[xData, yData] = prepareCurveData( edgesStamps, meanU );
+[xData, yData] = prepareCurveData( edgesStamps, meanRho );
 
 % Set up fittype and options.
-ft = fittype( 'poly2' );
+ft = fittype( 'gauss1' );
+opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+opts.Display = 'Off';
+opts.Lower = [-Inf -Inf 0];
+opts.StartPoint = [0.0421934219342193 -6.55752199981861e-10 7.45887048693731e-09];
 
 % Fit model to data.
-[fitresult, gof] = fit( xData, yData, ft );
+[fitresult, gof] = fit( xData, yData, ft, opts );
 bounds = confint(fitresult);
 
-k = 2*fitresult.p1;
-k_error = (bounds(1,1) - bounds(1,2))/2;
+k = 2*kbT/(fitresult.c1^2);
+k_error = abs(2*kbT/bounds(1,3)^2 - 2*kbT/bounds(2,3)^2);
 f_c = k/(2*pi*gamma);
 f_c_err = k_error/(2*pi*gamma);
