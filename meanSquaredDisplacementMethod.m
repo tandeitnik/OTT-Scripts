@@ -141,28 +141,31 @@ err = sqrt(MSDvar);
 
 %fitting the MSD to the theorical model
 % Define Start points, fit-function and fit curve
-k0 = [kTentative]; 
-fitfun = fittype( @(k,x) (2*kbT/k)*(1-exp((-1*x*k)/gamma)) );
+k0 = [kTentative,gamma]; 
+%fitfun = fittype( @(k,x) (2*kbT/k)*(1-exp((-1*x*k)/gamma)) );
+fitfun = fittype( @(k,g,x) (2*kbT/k)*(1-exp((-1*x*k)/g)) );
 [fitted_curve,gof] = fit(tau(:),MSDarray(:),fitfun,'StartPoint',k0);
 coeffvals = coeffvalues(fitted_curve);
 bounds = confint(fitted_curve);
 
-k = coeffvals;
+k = coeffvals(1);
+gammaFit = coeffvals(2);
 k_error = abs(bounds(1,1) - bounds(2,1));
-f_c = k/(2*pi*gamma);
-f_c_err = k_error/(2*pi*gamma);
+f_c = k/(2*pi*gammaFit);
+f_c_err = k_error/(2*pi*gammaFit);
 
 %3rd part, plotting the result
 
 errorbar(tau*1000,MSDarray*1e18,err*1e18,'o','DisplayName','experimental MSD')
 hold on
-plot(tau*1000,fitted_curve(tau)*1e18,'--r','LineWidth',2,'DisplayName','Non-linear fitting')
+plot(tau*1000,fitted_curve(tau)*1e18,'--r','LineWidth',3,'DisplayName','Non-linear fitting')
 xlabel('{\it \tau} [ms]');
 ylabel('{\it MSD} [nm^2]');
 aa = axis;
 set(gca,'FontSize',25)
 grid on
-xlim([tauMin*1000 tauMax*1000])
-ylim([MSDarray(1)*1e18,MSDarray(end)*1e18*1.05])
+xlim([tauMin*1000*0.93 tauMax*1000*1.01])
+ylim([MSDarray(1)*1e18*0.95,MSDarray(end)*1e18*1.05])
 legend('Location','southeast','Orientation','horizontal')
+%title("Experimental MSD")
 hold off;
